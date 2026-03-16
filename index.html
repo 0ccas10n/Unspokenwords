@@ -24,42 +24,10 @@
             background-color: #0a0a0a; /* Nền tối cinematic */
             color: #e0e0e0; /* Chữ sáng mờ */
             font-family: 'Lora', serif;
-            overflow: hidden; /* Ẩn thanh cuộn */
+            overflow: hidden; /* Ẩn thanh cuộn của body */
             display: flex;
             justify-content: center;
             align-items: center;
-        }
-
-        /* 1. Yêu cầu xoay ngang màn hình (Orientation Lock) */
-        #orientation-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #000;
-            z-index: 9999;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 20px;
-        }
-
-        #orientation-overlay .icon {
-            font-size: 50px;
-            margin-bottom: 20px;
-            animation: rotatePhone 2s infinite ease-in-out;
-        }
-
-        @keyframes rotatePhone {
-            0% { transform: rotate(0deg); }
-            50% { transform: rotate(90deg); }
-            100% { transform: rotate(0deg); }
-        }
-
-        /* Kích hoạt Overlay nếu màn hình dọc trên thiết bị di động */
-        @media screen and (orientation: portrait) and (max-width: 768px) {
-            #main-app { display: none !important; }
-            #orientation-overlay { display: flex; }
         }
 
         /* Container chính của ứng dụng */
@@ -99,6 +67,7 @@
         /* 2. Màn hình Mật khẩu (Screen 1) */
         #login-screen {
             background: radial-gradient(circle, #1a1a1a 0%, #000000 100%);
+            z-index: 10;
         }
 
         .login-container {
@@ -109,6 +78,9 @@
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(5px);
             border: 1px solid rgba(255, 255, 255, 0.05);
+            /* Responsive cho màn hình nhỏ */
+            width: 90%;
+            max-width: 400px;
         }
 
         .login-title {
@@ -127,7 +99,8 @@
             font-size: 1.5rem;
             text-align: center;
             padding: 10px;
-            width: 200px;
+            width: 80%; /* Chiếm 80% chiều rộng container */
+            max-width: 200px;
             letter-spacing: 5px;
             outline: none;
             transition: border-color 0.3s;
@@ -172,11 +145,22 @@
 
         /* 3. Màn hình Đọc thư (Screen 2) */
         #letter-screen {
-            padding: 5% 10%;
+            padding: 10vh 5%; /* Padding trên dưới và hai bên linh hoạt */
             background: radial-gradient(circle at center, #151515 0%, #050505 100%);
             align-items: flex-start; /* Căn chữ từ trên xuống */
             justify-content: flex-start;
-            padding-top: 15vh;
+            overflow-y: auto; /* Cho phép cuộn khi thư dài */
+            scroll-behavior: smooth;
+            cursor: pointer; /* Biểu tượng con trỏ có thể click */
+        }
+
+        /* Ẩn thanh cuộn mặc định cho đẹp */
+        #letter-screen::-webkit-scrollbar {
+            display: none;
+        }
+        #letter-screen {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
 
         #text-container {
@@ -184,15 +168,23 @@
             width: 100%;
             margin: 0 auto;
             position: relative;
+            padding-bottom: 100px; /* Không gian trống ở đáy để cuộn dễ hơn */
         }
 
-        #typewriter-text {
-            font-size: 1.8rem;
+        /* Class cho từng đoạn văn bản */
+        .paragraph {
+            /* Kích thước chữ mặc định (Desktop) */
+            font-size: 1.8rem; 
             line-height: 1.8;
             letter-spacing: 0.5px;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.1); /* Soft glow */
-            min-height: 200px;
-            transition: opacity 1s ease;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+            margin-bottom: 40px; /* Khoảng cách giữa các đoạn */
+            transition: opacity 1.5s ease;
+        }
+
+        /* Hiệu ứng làm mờ đoạn văn cũ */
+        .paragraph.dimmed {
+            opacity: 0.3;
         }
 
         /* Con trỏ nhấp nháy */
@@ -211,47 +203,104 @@
             50% { opacity: 0; }
         }
 
-        /* Nút chuyển đoạn (...) */
-        #next-btn {
-            background: transparent;
-            border: none;
-            color: #666;
-            font-size: 2rem;
-            cursor: pointer;
-            margin-top: 40px;
+        /* Dòng chữ nhắc nhở "Chạm để đọc tiếp" */
+        #continue-prompt {
+            /* Kích thước chữ mặc định */
+            font-size: 1.1rem;
+            color: #555;
+            font-style: italic;
+            text-align: center;
+            margin-top: 20px;
             opacity: 0;
             visibility: hidden;
-            transition: opacity 1s ease, color 0.3s;
-            outline: none;
-            letter-spacing: 5px;
+            transition: opacity 0.5s ease;
+            animation: pulseText 2s infinite ease-in-out;
+            letter-spacing: 2px;
         }
 
-        #next-btn.show {
+        #continue-prompt.show {
             opacity: 1;
             visibility: visible;
         }
 
-        #next-btn:hover {
-            color: #ccc;
+        @keyframes pulseText {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.8; }
         }
+
+        /* --- RESPONSIVE CSS (Điều chỉnh cho các màn hình khác nhau) --- */
+
+        /* Cho Máy tính bảng và Điện thoại (Màn hình nhỏ hơn 768px) */
+        @media screen and (max-width: 768px) {
+            .paragraph {
+                font-size: 1.4rem; /* Giảm cỡ chữ */
+                line-height: 1.6;
+                margin-bottom: 30px;
+            }
+            #continue-prompt {
+                font-size: 0.9rem;
+            }
+            .login-title {
+                font-size: 1rem;
+            }
+            #password-input {
+                font-size: 1.2rem;
+            }
+        }
+
+        /* Đặc biệt cho Điện thoại để DỌC (Portrait) */
+        @media screen and (max-width: 480px) and (orientation: portrait) {
+            #letter-screen {
+                padding: 5vh 5%; /* Giảm padding trên dưới */
+            }
+            .paragraph {
+                font-size: 1.2rem; /* Cỡ chữ nhỏ hơn nữa cho điện thoại dọc */
+                line-height: 1.5;
+                margin-bottom: 25px;
+                letter-spacing: 0.2px; /* Giảm khoảng cách chữ cho dễ đọc */
+            }
+            #continue-prompt {
+                font-size: 0.8rem;
+                letter-spacing: 1px;
+            }
+            .login-container {
+                padding: 30px 20px;
+            }
+        }
+
+        /* Đặc biệt cho Điện thoại để NGANG (Landscape) */
+        @media screen and (max-height: 500px) and (orientation: landscape) {
+            #letter-screen {
+                padding: 5vh 10%; /* Tăng padding hai bên để không bị quá rộng */
+            }
+            .paragraph {
+                font-size: 1.3rem; /* Cỡ chữ vừa phải */
+                line-height: 1.6;
+                margin-bottom: 20px; /* Giảm khoảng cách đoạn vì màn hình ngang bị thấp */
+            }
+            #text-container {
+                padding-bottom: 50px; /* Giảm không gian ở đáy */
+            }
+            .login-container {
+                padding: 20px; /* Giảm padding container login */
+                margin-top: 10px;
+            }
+            .login-title {
+                margin-bottom: 15px; /* Giảm khoảng cách */
+            }
+            #open-btn {
+                margin-top: 15px;
+            }
+        }
+
     </style>
 </head>
 <body>
 
     <!-- Audio ẩn, lặp lại. Placeholder: Tiếng piano nhẹ nhàng -->
-    <!-- Bạn có thể thay đổi link src dưới đây thành link nhạc mp3 của bạn -->
     <audio id="bg-music" loop>
         <source src="https://freepd.com/music/Somber%20Beauty.mp3" type="audio/mpeg">
     </audio>
-
-    <!-- Overlay cảnh báo xoay màn hình -->
-    <div id="orientation-overlay">
-        <div class="icon">📱</div>
-        <h2 style="font-weight: 400; line-height: 1.5; color: #ccc;">
-            Vui lòng xoay ngang điện thoại<br>
-            để trải nghiệm trọn vẹn cảm xúc...
-        </h2>
-    </div>
 
     <!-- Ứng dụng chính -->
     <div id="main-app">
@@ -269,10 +318,10 @@
         <!-- Màn hình 2: Đọc thư -->
         <div id="letter-screen" class="screen hidden">
             <div id="text-container">
-                <div id="typewriter-text"></div>
-                <!-- Nút chuyển đoạn -->
-                <button id="next-btn">...</button>
+                <!-- Các đoạn văn sẽ được JavaScript tự động thêm vào đây -->
             </div>
+            <!-- Nhắc nhở chạm màn hình -->
+            <div id="continue-prompt">(Chạm vào màn hình để đọc tiếp...)</div>
         </div>
 
     </div>
@@ -284,7 +333,7 @@
         // Mảng chứa các đoạn nội dung thư
         const letterContents = [
             "Đã lâu rồi chúng ta không nói chuyện với nhau... Khung chat vẫn ở đó, nhưng chẳng còn dòng tin nhắn nào mới được gửi đi.",
-            "Tôi biết, có những lúc sự im lặng của tôi đã làm cậu buồn. \n\n Có những lời chưa kịp nói ra, và có những lỗi lầm tôi chưa đủ can đảm để xin lỗi một cách trọn vẹn.",
+            "Tôi biết, có những lúc sự im lặng của tôi đã làm cậu buồn. Có những lời chưa kịp nói ra, và có những lỗi lầm tôi chưa đủ can đảm để xin lỗi một cách trọn vẹn.",
             "Chỉ mong một ngày nào đó, khi cậu đọc được những dòng này, những muộn phiền cũ sẽ tan biến. Cảm ơn cậu vì đã từng xuất hiện trong thanh xuân của tôi..."
         ];
 
@@ -294,19 +343,20 @@
         const passwordInput = document.getElementById('password-input');
         const openBtn = document.getElementById('open-btn');
         const bgMusic = document.getElementById('bg-music');
-        const typewriterDiv = document.getElementById('typewriter-text');
-        const nextBtn = document.getElementById('next-btn');
+        const textContainer = document.getElementById('text-container');
+        const continuePrompt = document.getElementById('continue-prompt');
 
         // --- State Variables ---
         let currentPartIndex = 0;
         let isTyping = false;
-        let typingTimeout;
+        let waitingForClick = false;
+        let currentParagraph = null;
 
         // --- LOGIC MÀN HÌNH 1: ĐĂNG NHẬP ---
         function handleLogin() {
             const val = passwordInput.value;
             if (val === CORRECT_PASSWORD) {
-                // Mật khẩu đúng: Fade out login, fade in letter
+                // Fade out login, fade in letter
                 loginScreen.classList.remove('visible');
                 loginScreen.classList.add('hidden');
                 
@@ -314,20 +364,17 @@
                     letterScreen.classList.remove('hidden');
                     letterScreen.classList.add('visible');
                     
-                    // Phát nhạc (yêu cầu tương tác của người dùng để lách luật autoplay)
-                    bgMusic.volume = 0.5; // Đặt âm lượng 50%
+                    bgMusic.volume = 0.5;
                     bgMusic.play().catch(err => console.log("Trình duyệt chặn autoplay audio", err));
                     
                     // Bắt đầu gõ đoạn thư đầu tiên
                     startTypingPart(currentPartIndex);
-                }, 1500); // Đợi login mờ hẳn (1.5s khớp với CSS transition)
+                }, 1500);
             } else {
-                // Mật khẩu sai: Rung ô input
                 passwordInput.classList.remove('shake');
-                // Trigger reflow để restart animation
-                void passwordInput.offsetWidth;
+                void passwordInput.offsetWidth; // Trigger reflow
                 passwordInput.classList.add('shake');
-                passwordInput.value = ""; // Xóa input
+                passwordInput.value = "";
             }
         }
 
@@ -337,13 +384,21 @@
         });
 
 
-        // --- LOGIC MÀN HÌNH 2: TYPEWRITER & CHUYỂN ĐOẠN ---
+        // --- LOGIC MÀN HÌNH 2: TYPEWRITER (CÁCH 2 - VIẾT TIẾP XUỐNG DƯỚI) ---
         function startTypingPart(index) {
             isTyping = true;
-            nextBtn.classList.remove('show');
-            typewriterDiv.style.opacity = 1;
-            typewriterDiv.innerHTML = '<span class="cursor"></span>'; // Reset text và giữ con trỏ
+            waitingForClick = false;
             
+            // Làm mờ tất cả các đoạn văn cũ trước khi viết đoạn mới
+            const allParagraphs = document.querySelectorAll('.paragraph');
+            allParagraphs.forEach(p => p.classList.add('dimmed'));
+
+            // Tạo thẻ div mới cho đoạn văn hiện tại và chèn vào container
+            currentParagraph = document.createElement('div');
+            currentParagraph.className = 'paragraph';
+            currentParagraph.innerHTML = '<span class="cursor"></span>';
+            textContainer.appendChild(currentParagraph);
+
             const textToType = letterContents[index];
             let charIndex = 0;
             
@@ -351,70 +406,87 @@
                 if (charIndex < textToType.length) {
                     const char = textToType.charAt(charIndex);
                     
-                    // Cập nhật HTML: chèn ký tự vào trước con trỏ
-                    typewriterDiv.innerHTML = textToType.substring(0, charIndex + 1) + '<span class="cursor"></span>';
+                    // Cập nhật chữ trong đoạn văn hiện tại
+                    currentParagraph.innerHTML = textToType.substring(0, charIndex + 1) + '<span class="cursor"></span>';
                     charIndex++;
 
-                    // Tính toán độ trễ ngẫu nhiên để mô phỏng "sự ngập ngừng, khó nói"
-                    let delay = 50 + Math.random() * 60; // Tốc độ cơ bản: 50ms - 110ms
-                    
-                    // Dừng lâu hơn ở dấu phẩy, dấu chấm
+                    // Tự động cuộn trang web xuống mượt mà khi dòng chữ dài ra
+                    letterScreen.scrollTo({
+                        top: letterScreen.scrollHeight,
+                        behavior: 'smooth'
+                    });
+
+                    // Tính toán độ trễ (Tốc độ gõ)
+                    let delay = 20 + Math.random() * 50; 
                     if (char === ',' || char === '.' || char === '…') {
                         delay += 400 + Math.random() * 300;
                     }
-                    
-                    // Thỉnh thoảng ngập ngừng ngẫu nhiên (5% cơ hội)
                     if (Math.random() < 0.05) {
                         delay += 300;
                     }
 
-                    typingTimeout = setTimeout(typeNextChar, delay);
+                    setTimeout(typeNextChar, delay);
                 } else {
-                    // Gõ xong đoạn này
+                    // Gõ xong đoạn hiện tại
                     isTyping = false;
-                    
-                    // Xóa con trỏ nhấp nháy khi gõ xong
-                    typewriterDiv.innerHTML = textToType;
+                    currentParagraph.innerHTML = textToType; // Xóa con trỏ nhấp nháy
 
-                    // Nếu chưa phải đoạn cuối cùng, hiện nút đi tiếp
                     if (currentPartIndex < letterContents.length - 1) {
-                        nextBtn.classList.add('show');
-                    } else {
-                        // Nếu là đoạn cuối, có thể hiện một dòng kết mờ ảo
+                        // Nếu còn đoạn tiếp theo, hiện nhắc nhở và chờ người dùng chạm
+                        continuePrompt.classList.add('show');
+                        // Di chuyển nhắc nhở xuống cuối container
+                        letterScreen.appendChild(continuePrompt);
+                        waitingForClick = true;
+                        
+                        // Cuộn thêm một chút để thấy rõ nhắc nhở
                         setTimeout(() => {
+                            letterScreen.scrollTo({ top: letterScreen.scrollHeight, behavior: 'smooth' });
+                        }, 100);
+                        
+                    } else {
+                        // NẾU LÀ ĐOẠN CUỐI CÙNG
+                        setTimeout(() => {
+                            // Tạo chữ ký/chốt lại ở cuối
                             const endMark = document.createElement('div');
-                            endMark.style.marginTop = '40px';
-                            endMark.style.fontSize = '1.2rem';
-                            endMark.style.color = '#555';
+                            endMark.className = 'paragraph';
+                            endMark.style.textAlign = 'right';
+                            endMark.style.marginTop = '60px';
+                            endMark.style.fontSize = '1.3rem';
+                            endMark.style.color = '#777';
                             endMark.style.fontStyle = 'italic';
-                            endMark.style.opacity = '0';
-                            endMark.style.transition = 'opacity 2s ease';
                             endMark.innerText = "— Gửi từ một người đã từng —";
-                            typewriterDiv.appendChild(endMark);
+                            textContainer.appendChild(endMark);
                             
-                            // Trigger fade in
-                            setTimeout(() => { endMark.style.opacity = '1'; }, 100);
+                            // Cuộn xuống dòng cuối
+                            letterScreen.scrollTo({ top: letterScreen.scrollHeight, behavior: 'smooth' });
+
+                            // SAU ĐÓ: Thắp sáng lại toàn bộ bức thư
+                            setTimeout(() => {
+                                const allParagraphs = document.querySelectorAll('.paragraph');
+                                allParagraphs.forEach(p => p.classList.remove('dimmed'));
+                            }, 1500);
+
                         }, 1000);
                     }
                 }
             }
             
-            // Khởi chạy gõ chữ sau một khoảng nghỉ nhẹ
+            // Bắt đầu gõ sau một khoảng nghỉ 1 giây
             setTimeout(typeNextChar, 1000);
         }
 
-        // Xử lý khi nhấn nút chuyển đoạn "..."
-        nextBtn.addEventListener('click', () => {
-            if (isTyping) return; // Khóa không cho bấm khi đang gõ
-            
-            // Fade out đoạn cũ
-            nextBtn.classList.remove('show');
-            typewriterDiv.style.opacity = 0;
-            
-            setTimeout(() => {
+        // --- SỰ KIỆN: CHẠM ĐỂ ĐỌC TIẾP ---
+        // Người dùng có thể click chuột hoặc chạm ngón tay vào bất cứ đâu trên màn hình đọc thư
+        letterScreen.addEventListener('click', () => {
+            if (waitingForClick && !isTyping) {
+                // Ẩn nhắc nhở
+                continuePrompt.classList.remove('show');
+                waitingForClick = false;
+                
+                // Chuyển sang đoạn tiếp theo
                 currentPartIndex++;
                 startTypingPart(currentPartIndex);
-            }, 1000); // Đợi text cũ mờ đi (1s khớp với CSS transition)
+            }
         });
 
     </script>
