@@ -369,6 +369,21 @@
         let isTyping = false;
         let waitingForClick = false;
         let currentParagraph = null;
+        let isUserInteracting = false; // Biến kiểm tra người dùng có đang chạm/cuộn không
+        let wheelTimeout;
+
+        // Lắng nghe sự kiện để biết người dùng đang giữ ngón tay/chuột để lướt
+        letterScreen.addEventListener('touchstart', () => isUserInteracting = true, {passive: true});
+        letterScreen.addEventListener('touchend', () => isUserInteracting = false, {passive: true});
+        letterScreen.addEventListener('touchcancel', () => isUserInteracting = false, {passive: true});
+        letterScreen.addEventListener('mousedown', () => isUserInteracting = true);
+        letterScreen.addEventListener('mouseup', () => isUserInteracting = false);
+        letterScreen.addEventListener('mouseleave', () => isUserInteracting = false);
+        letterScreen.addEventListener('wheel', () => {
+            isUserInteracting = true;
+            clearTimeout(wheelTimeout);
+            wheelTimeout = setTimeout(() => isUserInteracting = false, 500);
+        }, {passive: true});
 
         // --- LOGIC MÀN HÌNH 1: ĐĂNG NHẬP ---
         function handleLogin() {
@@ -428,20 +443,16 @@
                     currentParagraph.innerHTML = textToType.substring(0, charIndex + 1) + '<span class="cursor"></span>';
                     charIndex++;
 
-                    // Kiểm tra xem người dùng có đang ở gần cuối trang không (cách đáy dưới 150px)
-                    const isNearBottom = letterScreen.scrollHeight - letterScreen.scrollTop - letterScreen.clientHeight < 150;
+                    // Kiểm tra xem người dùng có đang ở gần cuối trang không (cách đáy dưới 100px)
+                    const isNearBottom = letterScreen.scrollHeight - letterScreen.scrollTop - letterScreen.clientHeight < 100;
 
-                    // Chỉ tự động cuộn xuống nếu người dùng đang ở cuối trang
-                    // Dùng 'auto' thay vì 'smooth' khi gõ từng chữ để tránh bị giật lag
-                    if (isNearBottom) {
-                        letterScreen.scrollTo({
-                            top: letterScreen.scrollHeight,
-                            behavior: 'auto'
-                        });
+                    // Chỉ tự động cuộn xuống nếu người dùng KHÔNG đang chạm màn hình và đang ở gần cuối trang
+                    if (!isUserInteracting && isNearBottom) {
+                        letterScreen.scrollTop = letterScreen.scrollHeight; // Dùng scrollTop trực tiếp thay vì scrollTo để không gây giật lag hoặc hủy vuốt
                     }
 
                     // Tính toán độ trễ (Tốc độ gõ)
-                    let delay = 5 + Math.random() * 10; 
+                    let delay = 20 + Math.random() * 50; 
                     if (char === ',' || char === '.' || char === '…') {
                         delay += 400 + Math.random() * 300;
                     }
