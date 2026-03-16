@@ -428,14 +428,20 @@
                     currentParagraph.innerHTML = textToType.substring(0, charIndex + 1) + '<span class="cursor"></span>';
                     charIndex++;
 
-                    // Tự động cuộn trang web xuống mượt mà khi dòng chữ dài ra
-                    letterScreen.scrollTo({
-                        top: letterScreen.scrollHeight,
-                        behavior: 'smooth'
-                    });
+                    // Kiểm tra xem người dùng có đang ở gần cuối trang không (cách đáy dưới 150px)
+                    const isNearBottom = letterScreen.scrollHeight - letterScreen.scrollTop - letterScreen.clientHeight < 150;
+
+                    // Chỉ tự động cuộn xuống nếu người dùng đang ở cuối trang
+                    // Dùng 'auto' thay vì 'smooth' khi gõ từng chữ để tránh bị giật lag
+                    if (isNearBottom) {
+                        letterScreen.scrollTo({
+                            top: letterScreen.scrollHeight,
+                            behavior: 'auto'
+                        });
+                    }
 
                     // Tính toán độ trễ (Tốc độ gõ)
-                    let delay = 15 + Math.random() * 50; 
+                    let delay = 20 + Math.random() * 50; 
                     if (char === ',' || char === '.' || char === '…') {
                         delay += 400 + Math.random() * 300;
                     }
@@ -504,6 +510,11 @@
                 // Chuyển sang đoạn tiếp theo
                 currentPartIndex++;
                 startTypingPart(currentPartIndex);
+
+                // Cuộn mượt xuống đáy khi người dùng bắt đầu đọc đoạn mới
+                setTimeout(() => {
+                    letterScreen.scrollTo({ top: letterScreen.scrollHeight, behavior: 'smooth' });
+                }, 50);
             }
         });
 
